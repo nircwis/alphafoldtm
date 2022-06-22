@@ -50,34 +50,34 @@ def getpar():
     parser.add_argument('-d', '--drop_peroxisome', action='store_true', help='drop all peroxisome proteins?')
     args = parser.parse_args(args=None, namespace=c)
 
-    if c.cluster==True:
-        c.branda == False
+    if c.cluster is True:
+        c.branda is False
         c.short = False
         c.verbose = False
 
-    if c.branda==False: c.short=False
+    if c.branda is False: c.short=False
 
-    if c.input=='' and c.cluster==False:
+    if c.input=='' and c.cluster is False:
         c.input=input('Enter input folder path: ')
         if c.input=='':
             sys.exit('No input folder path given')
-    elif c.input=='' and c.cluster==True:
+    elif c.input=='' and c.cluster is True:
         sys.exit('No input folder path given')
 
-    if c.output=='' and c.cluster==False:
+    if c.output=='' and c.cluster is False:
         c.output=input('Enter output file name and path(if leave empty files will be saved to the input path): ')
         if c.output=='':
             if os.path.exists(c.input):
                 c.output=os.path.dirname(os.path.abspath(c.input))+os.sep
             else:
                 c.output=c.input
-    elif c.output=='' and c.cluster==True:
+    elif c.output=='' and c.cluster is True:
         if os.path.exists(c.input):
             c.output = os.path.dirname(os.path.abspath(c.input)) + os.sep
         else:
             sys.exit('No output file name given')
 
-    if c.threshold==None:
+    if c.threshold is None:
         THRESHOLD = 0.5
         LenghTHRESHOLD = 30
         RMSDTHRESHOLD = 2
@@ -104,14 +104,14 @@ def update_db():
     duration_yeastprot = today - modified_date_yeastprot
     duration_SGDDB = today - modified_date_SGDDB
 
-    if os.path.exists(scriptpath + 'brnddb.h5') & os.path.exists(scriptpath + 'yeastprot.h5') & os.path.exists(scriptpath + 'SGDDB.h5') |duration_brnddb.days > 90|duration_yeastprot.days > 90|duration_SGDDB.days > 90| c.update==True: doupdate=False
+    if os.path.exists(scriptpath + 'brnddb.h5') & os.path.exists(scriptpath + 'yeastprot.h5') & os.path.exists(scriptpath + 'SGDDB.h5') |duration_brnddb.days > 90|duration_yeastprot.days > 90|duration_SGDDB.days > 90| c.update is True: doupdate=False
     else: doupdate=True
-    if doupdate==False:
+    if doupdate is False:
         brnddb = pd.read_hdf(scriptpath + 'brnddb.h5','brnddb')
         yeastprot = pd.read_hdf(scriptpath + 'yeastprot.h5','yeastprot')
         SGDDB = pd.read_hdf(scriptpath + 'SGDDB.h5','SGDDB')
 
-    if doupdate==True:
+    if doupdate is True:
         brnddb = pd.read_csv('https://raw.githubusercontent.com/nircwis/alphafoldtm/main/brDB.csv', sep=',', names=['EC_PDB2', 'PDBchain2'], skiprows=1)
         yeastprot = pd.read_csv('https://raw.githubusercontent.com/nircwis/alphafoldtm/main/proteome.csv', sep=',', names=['PDBchain1', 'ORF'], skiprows=1)
         SGDDB = pd.read_csv('https://raw.githubusercontent.com/nircwis/alphafoldtm/main/SGDDB.csv', sep=',', names=['ORF', 'name', 'description'], skiprows=1)
@@ -166,10 +166,10 @@ def sorta(fname):
         unidata = getuniprotdatav2(data['PDBchain2'])
         unidata['PDBchain2']=unidata['PDBchain2'].astype(str)
         data=pd.merge(unidata,data, on='PDBchain2', how='inner')
-        if c.branda==True:
+        if c.branda is True:
             brnddb['PDBchain2'] = brnddb['PDBchain2'].astype(str)
             data = pd.merge(data, brnddb, left_on='PDBchain2', right_on='PDBchain2', how='inner')
-        if c.yeast==True:
+        if c.yeast is True:
             yeastprot['PDBchain1'] = yeastprot['PDBchain1'].astype(str)
             data=pd.merge(data, yeastprot, on='PDBchain1', how='inner')
     data=data.drop(['max', 'minlen'], axis=1)
@@ -193,24 +193,24 @@ brnddb,yeastprot,SGDDB = update_db()
 if __name__ == '__main__':
 #files location
     files = glob.glob(c.input+'*.txt')
-    if c.verbose == True: print('starting with threshold of',c.threshold,'input file',c.input,'and output file', c.output)
-    if c.parallel==True:
-        if c.verbose == True: print('starting US align sorting with ' + str(multiprocessing.cpu_count()) + ' cores')
+    if c.verbose is True: print('starting with threshold of',c.threshold,'input file',c.input,'and output file', c.output)
+    if c.parallel is True:
+        if c.verbose is True: print('starting US align sorting with ' + str(multiprocessing.cpu_count()) + ' cores')
         with multiprocessing.Pool(multiprocessing.cpu_count()) as pool:
             data = pool.map(sorta, files)
     else:
-        if c.verbose == True: print('starting US align sorting')
+        if c.verbose is True: print('starting US align sorting')
         data = [sorta(f) for f in files]
-    if c.cluster==True:
+    if c.cluster is True:
         data=[sorta(c.input)]
         new_name=c.input.split('/')[-1].split('.')[0]+' '
     else:
         new_name=''
-    if c.verbose==True : print('done with USalign sorting. saiving data')
+    if c.verbose is True : print('done with USalign sorting. saiving data')
     newset = pd.concat(data, axis=0)
     newset.to_csv(c.output + new_name + 'reduced_datasets.csv', index=False)
-    if c.short==True:
-        if c.verbose==True: print('runing with SGD and UNIPROT to make short list')
+    if c.short is True:
+        if c.verbose is True: print('runing with SGD and UNIPROT to make short list')
         trulist=makeshortlist(newset)
-        if c.verbose==True: print('saiving short list')
+        if c.verbose is True: print('saiving short list')
         trulist.to_csv(c.output+'shortlist.csv', index=False, sep=',')
